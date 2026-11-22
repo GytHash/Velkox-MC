@@ -1,0 +1,299 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidCode(code) {
+      return code is string && code.size() >= 6 && code.size() <= 8 && code.matches('^[A-Z0-9]+$');
+    }
+
+    function isValidMcUsername(name) {
+      return name is string && name.size() >= 2 && name.size() <= 16 && name.matches('^[a-zA-Z0-9_]+$');
+    }
+
+    function isValidSkinPreset(skin) {
+      return skin is string && skin in ['steve', 'emerald', 'diamond', 'redstone', 'gold', 'obsidian', 'amethyst', 'creeper'];
+    }
+
+    function isGroupMember(groupId) {
+      return isSignedIn() && exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    function isGroupOwner(groupId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/groups/$(groupId)) &&
+        get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid;
+    }
+
+    // Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'mcUsername', 'skinPreset', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'mcUsername', 'skinPreset', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid == userId && data.uid == request.auth.uid && isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 256 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+        isValidMcUsername(data.mcUsername) &&
+        isValidSkinPreset(data.skinPreset) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidJoinedGroup(data, groupId) {
+      return data.keys().hasAll(['groupId', 'groupName', 'groupCode', 'role', 'joinedAt']) &&
+        data.keys().hasOnly(['groupId', 'groupName', 'groupCode', 'role', 'joinedAt']) &&
+        data.groupId is string && data.groupId == groupId && isValidId(data.groupId) &&
+        data.groupName is string && data.groupName.size() >= 2 && data.groupName.size() <= 40 &&
+        isValidCode(data.groupCode) &&
+        data.role is string && data.role in ['owner', 'member'] &&
+        data.joinedAt is timestamp;
+    }
+
+    function isValidGroupCode(data, code) {
+      return data.keys().hasAll(['code', 'groupId', 'groupName', 'ownerId', 'createdAt']) &&
+        data.keys().hasOnly(['code', 'groupId', 'groupName', 'ownerId', 'createdAt']) &&
+        data.code is string && data.code == code && isValidCode(data.code) &&
+        isValidId(data.groupId) && data.groupId.size() <= 64 &&
+        data.groupName is string && data.groupName.size() >= 2 && data.groupName.size() <= 40 &&
+        isValidId(data.ownerId) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidGroup(data, groupId) {
+      return data.keys().hasAll(['id', 'name', 'motd', 'code', 'ownerId', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'name', 'motd', 'code', 'ownerId', 'createdAt', 'updatedAt']) &&
+        data.id is string && data.id == groupId && isValidId(data.id) && data.id.size() <= 64 &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 40 &&
+        data.motd is string && data.motd.size() <= 100 &&
+        isValidCode(data.code) &&
+        isValidId(data.ownerId) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidGroupMember(data, memberId) {
+      return data.keys().hasAll(['uid', 'mcUsername', 'skinPreset', 'role', 'joinedAt']) &&
+        data.keys().hasOnly(['uid', 'mcUsername', 'skinPreset', 'role', 'joinedAt']) &&
+        data.uid is string && data.uid == memberId && isValidId(data.uid) &&
+        isValidMcUsername(data.mcUsername) &&
+        isValidSkinPreset(data.skinPreset) &&
+        data.role is string && data.role in ['owner', 'member'] &&
+        data.joinedAt is timestamp;
+    }
+
+    function isValidGroupRoster(data, groupId) {
+      return data.keys().hasAll(['groupId', 'members', 'updatedAt']) &&
+        data.keys().hasOnly(['groupId', 'members', 'updatedAt']) &&
+        data.groupId is string && data.groupId == groupId && isValidId(data.groupId) &&
+        data.members is map && data.members.size() <= 100 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidVcInvite(data, inviteId) {
+      return data.keys().hasAll(['inviteId', 'groupId', 'groupName', 'channelId', 'channelName', 'fromUid', 'fromMcName', 'status', 'createdAt']) &&
+        data.keys().hasOnly(['inviteId', 'groupId', 'groupName', 'channelId', 'channelName', 'fromUid', 'fromMcName', 'status', 'createdAt']) &&
+        data.inviteId is string && data.inviteId == inviteId && isValidId(data.inviteId) && data.inviteId.size() <= 64 &&
+        isValidId(data.groupId) && data.groupId.size() <= 64 &&
+        data.groupName is string && data.groupName.size() >= 2 && data.groupName.size() <= 40 &&
+        isValidId(data.channelId) && data.channelId.size() <= 64 &&
+        data.channelName is string && data.channelName.size() >= 2 && data.channelName.size() <= 32 &&
+        isValidId(data.fromUid) &&
+        isValidMcUsername(data.fromMcName) &&
+        data.status is string && data.status in ['pending', 'accepted', 'declined'] &&
+        data.createdAt is timestamp;
+    }
+
+    // 1. User Profiles (Strict PII isolation)
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isVerifiedUser() && isValidId(userId) && isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(userId) && isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().email == existing().email &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'mcUsername', 'skinPreset', 'updatedAt']);
+      allow delete: if false;
+
+      // 2. User's Joined Groups Index
+      match /joinedGroups/{groupId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(groupId) && isOwner(userId);
+        allow list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+        allow create: if isVerifiedUser() && isValidId(userId) && isValidId(groupId) && isOwner(userId) &&
+          isValidJoinedGroup(incoming(), groupId) &&
+          incoming().joinedAt == request.time &&
+          existsAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(userId)) &&
+          (
+            incoming().role == 'member' ||
+            (incoming().role == 'owner' && getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == userId)
+          );
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(groupId) && isOwner(userId);
+      }
+
+      // 3. Incoming Temporary VC Invites
+      match /vcInvites/{inviteId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(inviteId) && isOwner(userId);
+        allow list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+        allow create: if isVerifiedUser() && isValidId(userId) && isValidId(inviteId) &&
+          isValidVcInvite(incoming(), inviteId) &&
+          incoming().fromUid == request.auth.uid &&
+          incoming().status == 'pending' &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/groups/$(incoming().groupId)/members/$(request.auth.uid)) &&
+          exists(/databases/$(database)/documents/groups/$(incoming().groupId)/members/$(userId));
+        allow update: if isVerifiedUser() && isValidId(userId) && isValidId(inviteId) && isOwner(userId) &&
+          isValidVcInvite(incoming(), inviteId) &&
+          existing().status == 'pending' &&
+          incoming().status in ['accepted', 'declined'] &&
+          incoming().inviteId == existing().inviteId &&
+          incoming().groupId == existing().groupId &&
+          incoming().groupName == existing().groupName &&
+          incoming().channelId == existing().channelId &&
+          incoming().channelName == existing().channelName &&
+          incoming().fromUid == existing().fromUid &&
+          incoming().fromMcName == existing().fromMcName &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(inviteId) && isOwner(userId);
+      }
+    }
+
+    // 4. Group Code Lookup (get-only, never list)
+    match /groupCodes/{code} {
+      allow get: if isSignedIn() && isValidCode(code);
+      allow list: if false;
+      allow create: if isVerifiedUser() && isValidCode(code) &&
+        isValidGroupCode(incoming(), code) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        existsAfter(/databases/$(database)/documents/groups/$(incoming().groupId));
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidCode(code) && existing().ownerId == request.auth.uid;
+    }
+
+    // 5. Voice Groups
+    match /groups/{groupId} {
+      allow get: if isSignedIn() && isValidId(groupId) && isGroupMember(groupId);
+      allow list: if false;
+      allow create: if isVerifiedUser() && isValidId(groupId) &&
+        isValidGroup(incoming(), groupId) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        existsAfter(/databases/$(database)/documents/groupCodes/$(incoming().code)) &&
+        existsAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+      allow update: if isVerifiedUser() && isValidId(groupId) &&
+        isValidGroup(incoming(), groupId) &&
+        isGroupOwner(groupId) &&
+        incoming().id == existing().id &&
+        incoming().code == existing().code &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'motd', 'updatedAt']);
+      allow delete: if isVerifiedUser() && isValidId(groupId) && isGroupOwner(groupId);
+
+      // 6. Verified Group Members
+      match /members/{memberId} {
+        allow get: if isSignedIn() && isValidId(groupId) && isValidId(memberId) &&
+          (isOwner(memberId) || isGroupMember(groupId));
+        allow list: if false;
+        allow create: if isVerifiedUser() && isValidId(groupId) && isValidId(memberId) &&
+          isOwner(memberId) &&
+          isValidGroupMember(incoming(), memberId) &&
+          incoming().joinedAt == request.time &&
+          (
+            (incoming().role == 'owner' && getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid) ||
+            (incoming().role == 'member' && exists(/databases/$(database)/documents/groups/$(groupId)))
+          );
+        allow update: if isVerifiedUser() && isValidId(groupId) && isValidId(memberId) &&
+          isOwner(memberId) &&
+          isValidGroupMember(incoming(), memberId) &&
+          incoming().uid == existing().uid &&
+          incoming().role == existing().role &&
+          incoming().joinedAt == existing().joinedAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['mcUsername', 'skinPreset']);
+        allow delete: if isVerifiedUser() && isValidId(groupId) && isValidId(memberId) &&
+          (isOwner(memberId) || isGroupOwner(groupId));
+      }
+
+      // 7. Shared Non-PII Group Roster (single document read via get)
+      match /roster/{rosterId} {
+        allow get: if isSignedIn() && isValidId(groupId) && rosterId == 'public' && isGroupMember(groupId);
+        allow list: if false;
+        allow create: if isVerifiedUser() && isValidId(groupId) && rosterId == 'public' &&
+          isValidGroupRoster(incoming(), groupId) &&
+          incoming().members.keys().hasOnly([request.auth.uid]) &&
+          incoming().members[request.auth.uid] is map &&
+          incoming().members[request.auth.uid].keys().hasAll(['uid', 'mcUsername', 'skinPreset', 'role']) &&
+          incoming().members[request.auth.uid].keys().hasOnly(['uid', 'mcUsername', 'skinPreset', 'role']) &&
+          incoming().members[request.auth.uid].uid == request.auth.uid &&
+          isValidMcUsername(incoming().members[request.auth.uid].mcUsername) &&
+          isValidSkinPreset(incoming().members[request.auth.uid].skinPreset) &&
+          incoming().members[request.auth.uid].role == 'owner' &&
+          incoming().updatedAt == request.time &&
+          getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == request.auth.uid;
+        allow update: if isVerifiedUser() && isValidId(groupId) && rosterId == 'public' &&
+          isValidGroupRoster(incoming(), groupId) &&
+          incoming().groupId == existing().groupId &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['members', 'updatedAt']) &&
+          (
+            isGroupOwner(groupId) ||
+            (
+              (isGroupMember(groupId) || existsAfter(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid))) &&
+              incoming().members.diff(existing().members).affectedKeys().hasOnly([request.auth.uid]) &&
+              (
+                !(request.auth.uid in incoming().members) ||
+                (
+                  incoming().members[request.auth.uid] is map &&
+                  incoming().members[request.auth.uid].keys().hasAll(['uid', 'mcUsername', 'skinPreset', 'role']) &&
+                  incoming().members[request.auth.uid].keys().hasOnly(['uid', 'mcUsername', 'skinPreset', 'role']) &&
+                  incoming().members[request.auth.uid].uid == request.auth.uid &&
+                  isValidMcUsername(incoming().members[request.auth.uid].mcUsername) &&
+                  isValidSkinPreset(incoming().members[request.auth.uid].skinPreset) &&
+                  incoming().members[request.auth.uid].role == 'member'
+                )
+              )
+            )
+          );
+        allow delete: if isVerifiedUser() && isValidId(groupId) && rosterId == 'public' && isGroupOwner(groupId);
+      }
+    }
+  }
+}

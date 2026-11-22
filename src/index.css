@@ -1,0 +1,182 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-pixel: "Silkscreen", monospace;
+    --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #0d0f12;
+    color: #f2f4f8;
+    overflow-x: hidden;
+  }
+}
+
+.font-pixel {
+  font-family: var(--font-pixel);
+  letter-spacing: -0.02em;
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Minecraft Java Edition Beveled Stone Button */
+.mc-btn {
+  position: relative;
+  background-color: #6d6d6d;
+  color: #ffffff;
+  border: 2px solid #000000;
+  box-shadow:
+    inset 2px 2px 0px #a6a6a6,
+    inset -2px -2px 0px #444444;
+  text-shadow: 2px 2px 0px #2b2b2b;
+  transition: background-color 120ms ease, transform 80ms ease;
+}
+
+.mc-btn:hover:not(:disabled) {
+  background-color: #7c89c9;
+  box-shadow:
+    inset 2px 2px 0px #b4c0ff,
+    inset -2px -2px 0px #4a558c;
+}
+
+.mc-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 2px 2px 0px #444444,
+    inset -2px -2px 0px #8e8e8e;
+}
+
+.mc-btn:disabled {
+  background-color: #3a3a3a;
+  color: #8b8b8b;
+  box-shadow:
+    inset 2px 2px 0px #4f4f4f,
+    inset -2px -2px 0px #242424;
+  cursor: not-allowed;
+}
+
+/* Minecraft Emerald Primary Button */
+.mc-btn-emerald {
+  position: relative;
+  background-color: #3c8527;
+  color: #ffffff;
+  border: 2px solid #000000;
+  box-shadow:
+    inset 2px 2px 0px #63c146,
+    inset -2px -2px 0px #235315;
+  text-shadow: 2px 2px 0px #183a0e;
+  transition: background-color 120ms ease, transform 80ms ease;
+}
+
+.mc-btn-emerald:hover:not(:disabled) {
+  background-color: #489c30;
+  box-shadow:
+    inset 2px 2px 0px #7de35d,
+    inset -2px -2px 0px #2a631a;
+}
+
+.mc-btn-emerald:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 2px 2px 0px #235315,
+    inset -2px -2px 0px #63c146;
+}
+
+.mc-btn-emerald:disabled {
+  background-color: #264220;
+  color: #7c9675;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Minecraft Redstone Danger Button */
+.mc-btn-redstone {
+  position: relative;
+  background-color: #a62c2c;
+  color: #ffffff;
+  border: 2px solid #000000;
+  box-shadow:
+    inset 2px 2px 0px #dc5c5c,
+    inset -2px -2px 0px #661717;
+  text-shadow: 2px 2px 0px #470e0e;
+  transition: background-color 120ms ease, transform 80ms ease;
+}
+
+.mc-btn-redstone:hover:not(:disabled) {
+  background-color: #c23636;
+  box-shadow:
+    inset 2px 2px 0px #f07575,
+    inset -2px -2px 0px #781c1c;
+}
+
+.mc-btn-redstone:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Minecraft Java Dark Inventory / Server List Container */
+.mc-panel {
+  background-color: rgba(20, 23, 28, 0.94);
+  border: 2px solid #000000;
+  box-shadow:
+    inset 2px 2px 0px #3c424d,
+    inset -2px -2px 0px #0b0d10;
+}
+
+/* Minecraft Java Classic Light-Stone Dialog Container (Optional / Accent Header) */
+.mc-slot {
+  background-color: #13161b;
+  border: 2px solid #000000;
+  box-shadow:
+    inset 2px 2px 0px #08090b,
+    inset -2px -2px 0px #2d323b;
+}
+
+.mc-input {
+  background-color: #090b0d;
+  color: #f2f4f8;
+  border: 2px solid #595e68;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.mc-input:focus {
+  border-color: #ffffff;
+}
+
+/* Subtle Deepslate Pixel Grid Texture */
+.mc-deepslate-bg {
+  background-color: #0d0f12;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@keyframes mc-panorama-pan {
+  0% {
+    transform: scale(1.08) translateX(-1.5%);
+  }
+  50% {
+    transform: scale(1.08) translateX(1.5%);
+  }
+  100% {
+    transform: scale(1.08) translateX(-1.5%);
+  }
+}
+
+.mc-panorama-motion {
+  animation: mc-panorama-pan 36s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-panorama-motion {
+    animation: none;
+  }
+}

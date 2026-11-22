@@ -1,0 +1,298 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user profile containing Google account email and Minecraft voice identity.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "mcUsername": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 16,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "skinPreset": {
+          "type": "string",
+          "enum": ["steve", "emerald", "diamond", "redstone", "gold", "obsidian", "amethyst", "creeper"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "displayName", "mcUsername", "skinPreset", "createdAt", "updatedAt"]
+    },
+    "JoinedGroup": {
+      "title": "JoinedGroup",
+      "description": "Per-user index of groups the user has created or joined.",
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "groupName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "groupCode": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 8,
+          "pattern": "^[A-Z0-9]+$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "member"]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["groupId", "groupName", "groupCode", "role", "joinedAt"]
+    },
+    "GroupCodeLookup": {
+      "title": "GroupCodeLookup",
+      "description": "Direct lookup from an uppercase invite code to a group ID.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 8,
+          "pattern": "^[A-Z0-9]+$"
+        },
+        "groupId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "groupName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["code", "groupId", "groupName", "ownerId", "createdAt"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "A Minecraft voice group with a join code and owner.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "motd": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100
+        },
+        "code": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 8,
+          "pattern": "^[A-Z0-9]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "name", "motd", "code", "ownerId", "createdAt", "updatedAt"]
+    },
+    "GroupMember": {
+      "title": "GroupMember",
+      "description": "Verified membership record of a user inside a group.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "mcUsername": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 16,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "skinPreset": {
+          "type": "string",
+          "enum": ["steve", "emerald", "diamond", "redstone", "gold", "obsidian", "amethyst", "creeper"]
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "member"]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "mcUsername", "skinPreset", "role", "joinedAt"]
+    },
+    "GroupRoster": {
+      "title": "GroupRoster",
+      "description": "Public non-PII roster document for members of a group.",
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "members": {
+          "type": "object"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["groupId", "members", "updatedAt"]
+    },
+    "VcInvite": {
+      "title": "VcInvite",
+      "description": "Direct temporary voice channel invite sent from one group member to another.",
+      "type": "object",
+      "properties": {
+        "inviteId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "groupId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "groupName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "channelId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "channelName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32
+        },
+        "fromUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fromMcName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 16,
+          "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "accepted", "declined"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["inviteId", "groupId", "groupName", "channelId", "channelName", "fromUid", "fromMcName", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile isolated by owner UID."
+    },
+    "/users/{userId}/joinedGroups/{groupId}": {
+      "schema": { "$ref": "#/entities/JoinedGroup" },
+      "description": "User's personal list of joined groups."
+    },
+    "/users/{userId}/vcInvites/{inviteId}": {
+      "schema": { "$ref": "#/entities/VcInvite" },
+      "description": "Incoming temporary VC invites for a user from fellow group members."
+    },
+    "/groupCodes/{code}": {
+      "schema": { "$ref": "#/entities/GroupCodeLookup" },
+      "description": "Invite code lookup table (get-only, no list)."
+    },
+    "/groups/{groupId}": {
+      "schema": { "$ref": "#/entities/Group" },
+      "description": "Voice chat group metadata."
+    },
+    "/groups/{groupId}/members/{memberId}": {
+      "schema": { "$ref": "#/entities/GroupMember" },
+      "description": "Verified membership records for a group."
+    },
+    "/groups/{groupId}/roster/{rosterId}": {
+      "schema": { "$ref": "#/entities/GroupRoster" },
+      "description": "Shared non-PII member roster document (rosterId = public)."
+    }
+  }
+}

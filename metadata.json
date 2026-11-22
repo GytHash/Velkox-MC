@@ -1,0 +1,6 @@
+{
+  "name": "Velkox VC",
+  "description": "Browser-based Minecraft Java Edition voice chat with group invite codes, temporary voice channels, owner controls, and member-to-member VC invites.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
